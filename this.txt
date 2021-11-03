@@ -1,0 +1,298 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <speechapi_cxx.h>
+#include <locale.h>
+#include <conio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctime>
+#include <windows.h>
+
+
+using namespace std;
+using namespace Microsoft::CognitiveServices::Speech;
+using namespace Microsoft::CognitiveServices::Speech::Audio;
+
+auto autenticacao = SpeechConfig::FromSubscription("958fde7d42b84849b0f2536db51ba545", "brazilsouth"); // DECLARAÇÃO DA AUTENTICAÇÃO DO RECURSO
+auto requisicao_textofala = SpeechSynthesizer::FromConfig(autenticacao); // DECLARAÇÃO DO OBJETO DE REQUISIÇÃO DE TEXTO EM FALA DO RECURSO
+auto audio_config = AudioConfig::FromDefaultMicrophoneInput(); // DECLARAÇÃO DA ENTRADA DO MICROFONE
+auto requisicao_falatexto = SpeechRecognizer::FromConfig(autenticacao, audio_config); // DECLARAÇÃO DO OBJETO DE REQUISIÇÃO DE FALA EM TEXTO DO RECURSO
+
+// PROCEDIMENTO QUE REQUISITA DA API A TRANSFORMAÇÃO DE UM TEXTO EM FALA
+void texto_em_fala(string Texto)
+{
+    setlocale(LC_ALL, "portuguese");
+    cout << Texto + "\n";
+    requisicao_textofala->SpeakTextAsync(Texto).get(); // REQUISIÇÃO DA SINTETIZAÇÃO DE TEXTO EM FALA
+
+}
+// FUNÇÃO QUE REQUISITA DA API O RECONHECIMENTO DE UMA FALA E A TRANSFORMAÇÃO DESSA FALA EM UM TEXTO
+string fala_em_texto() {
+    setlocale(LC_ALL, "portuguese");
+    auto resultado = requisicao_falatexto->RecognizeOnceAsync().get(); // REQUISIÇÃO DO RECONHEIMENTO DE FALA EM TEXTO
+    cout << resultado->Text + "\n";
+    return resultado->Text; //CONVERSÃO DO RESULTADO DO RECONHECIMENTO EM TEXTO
+}
+
+
+void apaga() {
+
+    system("CLS");
+}
+
+
+
+
+int main()
+{
+
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 118);
+    setlocale(LC_ALL, "portuguese");
+    //Chamadas das funções de autenticação
+    autenticacao->SetSpeechRecognitionLanguage("pt-BR");                //  CONFIGURAÇÃO DA AUTENTICAÇÃO PARA O RECONHECIMENTO DE FALA EM PORTUGUÊS
+    autenticacao->SetSpeechSynthesisLanguage("pt-BR");                  //  CONFIGURAÇÃO DA AUTENTICAÇÃO PARA A SINTETIZAÇÃO DE FALA EM PORTUGUÊS
+    autenticacao->SetSpeechSynthesisVoiceName("pt-BR-FranciscaNeural"); //pt-BR-Daniel  // CONFIGURAÇÃO DA AUTENTICAÇÃO COM UMA VOZ ESPECÍFICA
+    requisicao_textofala = SpeechSynthesizer::FromConfig(autenticacao); //  REDEFINIÇÃO DO OBJETO REQUISICAO_TEXTOFALA COM AS NOVAS CONFIGURAÇÕES
+    requisicao_falatexto = SpeechRecognizer::FromConfig(autenticacao, audio_config); //  REDEFINIÇÃO DO OBJETO REQUISICAO_FALATEXTO COM AS NOVAS CONFIGURAÇÕES
+     
+
+    
+    char start{};
+
+    std::cout << "\t\t\nHangman!\n\n";
+    std::cout << "\t\tby Celine & Hernane\n";
+    std::cout << "\t\t_____________    \n";
+    std::cout << "\t\t|     |          \n";
+    std::cout << "\t\t|     O          \n";
+    std::cout << "\t\t|     |          \n";
+    std::cout << "\t\t|   / | \\       \n";
+    std::cout << "\t\t|  /  |  \\      \n";
+    std::cout << "\t\t|    / \\        \n";
+    std::cout << "\t\t|   /   \\       \n";
+    std::cout << "\t\t|_____________   \n";
+
+    texto_em_fala("\n\n\t\t\tDigite uma letra e pressione enter para iniciar\n\t\t\t");
+
+    std::cin >> start;
+
+    // start of the game
+    // set variables to use in game :
+
+    texto_em_fala("\n\n\n\n\n\n\n\n\t\tCarregando o Jogo");
+    apaga();
+
+    int attempts{ 6 }; //how many times it takes to guess correctly
+    bool correctGuess = false;
+
+    char previousGuess[7]; // array of guess > user can guess
+    previousGuess[0] = '\0';
+
+    for (int i = 0; i < 6; i++) {
+        previousGuess[i] = '-';
+    }
+    previousGuess[6] = '\0';
+    std::string word;  // word players guesses
+    std::string wordList[99]; // array 100 strings
+
+
+    // get a random word
+    srand(time(NULL)); // get any random word
+    std::ifstream RandomWord; // file reads variable ofstream
+    RandomWord.open("word.txt"); //reads from file
+
+
+    for (int i = 0; i < 99; i++) {
+        RandomWord >> wordList[i];
+        //  std::cout << "wordList[i]" <<std::endl; //TEST
+    }
+
+    int randomNum = rand() % 100;
+    word = wordList[randomNum];
+    //std::cout << word << std::endl; /*Mostra a Palavra - Remover esse comentário apenas p/ fins de teste*/
+    RandomWord.close();
+
+    // word mystry
+    std::string MystryWord(word.length(), '*');
+    //std::cout << MystryWord << std::endl;
+
+    texto_em_fala("\n\nPARTIDA INICIADA\n\n");
+    apaga();
+    while (attempts >= 0) {
+
+        // reset bool
+        correctGuess = false;
+
+
+        // this loop will keep on running until the statement is true.
+
+        // display info related to word
+
+        //mascará p/ palavra
+        std::cout << "\n\n\nPalavra Secreta: ";
+        std::cout <<  MystryWord << std::endl;
+        std::cout << "\n\nHa : " << MystryWord.length() << " letras na palavra \n";  std::cout << "voce tem: " << attempts << " tentativas\n";
+
+
+        if (previousGuess[0] == '\0') {
+
+            std::cout << std::endl;
+        }
+        else {
+            std::cout << "Voce disse " << previousGuess << std::endl;
+        }
+
+        texto_em_fala("Fale uma letra");
+        char oie = fala_em_texto().at(0);
+ 
+        texto_em_fala("Analisando...");
+        char guess;
+        guess = oie;
+        system("CLS");
+
+        // is guess correct
+        for (int i = 0; i < MystryWord.length(); i++) {
+            if (word[i] == guess) // does word = guess
+            {
+                MystryWord[i] = guess;
+                correctGuess = true;
+            }
+        }
+
+        if (word == MystryWord) {
+                texto_em_fala("\n\n\tParabens, voce descobriu a palavra!!!");
+                std::cout << MystryWord;
+            break;
+        }
+
+        if (correctGuess == false)
+        {
+            attempts--;
+            texto_em_fala("\n\n\tOps! Essa letra nao faz parte da palavra.\n");
+
+        }
+        else {
+            texto_em_fala("\n\n\tVoce acertou!\n");
+
+        }
+
+        switch (attempts) {
+        case 6:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|_____________    \n";
+
+            break;
+        }
+        case 5:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     O           \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|_____________    \n";
+            if (correctGuess == false) {
+                previousGuess[0] = guess;
+            }
+            break;
+        }
+        case 4:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     O           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|_____________    \n";
+            if (correctGuess == false) {
+                previousGuess[1] = guess;
+            }
+            break;
+        }
+        case 3:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     O           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|   / |           \n";
+            std::cout << "|  /  |           \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|_____________    \n";
+            if (correctGuess == false) {
+                previousGuess[2] = guess;
+            }
+            break;
+        }
+        case 2:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     O           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|   / | \\        \n";
+            std::cout << "|  /  |  \\       \n";
+            std::cout << "|                 \n";
+            std::cout << "|                 \n";
+            std::cout << "|_____________    \n";
+            if (correctGuess == false) {
+                previousGuess[3] = guess;
+            }
+            break;
+        }
+        case 1:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     O           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|   / | \\        \n";
+            std::cout << "|  /  |  \\       \n";
+            std::cout << "|    /            \n";
+            std::cout << "|   /             \n";
+            std::cout << "|_____________    \n";
+            if (correctGuess == false) {
+                previousGuess[4] = guess;
+            }
+            break;
+        }
+        case 0:
+        {
+            std::cout << "\n_____________   \n";
+            std::cout << "|     |           \n";
+            std::cout << "|     O           \n";
+            std::cout << "|     |           \n";
+            std::cout << "|   / | \\        \n";
+            std::cout << "|  /  |  \\       \n";
+            std::cout << "|    / \\         \n";
+            std::cout << "|   /   \\        \n";
+            std::cout << "|_____________    \n";
+            std::cout << "\n GAME OVER";
+            attempts--;
+            // attempts = - 1;
+            break;
+        }
+        default:
+            std::cout << "error";
+        }
+
+    }
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 5);
+    return 0;
+}
+
